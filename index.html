@@ -145,7 +145,7 @@
     <div class="container">
         <div id="scoreboard">
             <div class="score-t1">Team 1: <span id="s1">0</span></div>
-            <div>Question <span id="q-counter">1</span> / 50</div>
+            <div>Question <span id="q-counter">1</span> / <span id="q-total"></span></div>
             <div class="score-t2">Team 2: <span id="s2">0</span></div>
         </div>
         
@@ -201,12 +201,40 @@
 
 <script>
     // --- GAME DATA ---
-    // The exact order requested by user to enforce alternating teams
     const masterPlayerList = ["Aarav", "Anhad", "Emogen", "Daani", "Alyssa", "Maggie", "Aria", "Allison"];
     
+    // Massive 170+ Question Database generated from lecture notes and the 2026 OCIT Answer Key
     const quizData = [
+        // NERVOUS SYSTEM (From new PDF Key & Old Set)
+        { q: "Which lobe of the brain contains the motor cortex?", options: ["Frontal", "Occipital", "Parietal", "Temporal"], a: 0, exp: "The frontal lobe contains the motor cortex. [cite: 825]" },
+        { q: "Which lobe of the brain is the most common site for brain injury?", options: ["Parietal", "Occipital", "Frontal", "Temporal"], a: 2, exp: "The frontal lobe is the most common site for brain injury. [cite: 830]" },
+        { q: "Which part of the brain stem is specifically responsible for regulating the amount of air breathed, breaths per minute, and deep sleep?", options: ["Medulla oblongata", "Midbrain", "Pons", "Cerebellum"], a: 2, exp: "The Pons is responsible for regulating breathing and deep sleep. [cite: 835]" },
+        { q: "Which cerebellar lobe is most associated with maintaining posture and balance?", options: ["Anterior lobe", "Posterior lobe", "Flocculonodular lobe", "Paleocerebellum lobe"], a: 2, exp: "The flocculonodular lobe maintains posture and balance. [cite: 844]" },
+        { q: "Which of the following EEG wave types is 13-30 Hz?", options: ["Alpha", "Beta", "Delta", "Theta"], a: 1, exp: "Beta waves range from 13-30 Hz. [cite: 855]" },
+        { q: "What is the function of the corpus callosum?", options: ["Relay sensory information to the cortex", "Serve as a band of nerve fibers connecting the left and right hemispheres", "Regulate the production of essential hormones", "Act as a thin layer covering the outer brain"], a: 1, exp: "It serves as a band of nerve fibers connecting the left and right hemispheres. [cite: 860]" },
+        { q: "Parts of the spinal cord are referred to as 'dorsal'. Which of the following is closest in meaning to dorsal?", options: ["Anterior", "Posterior", "Superior", "Inferior"], a: 1, exp: "Dorsal is closest in meaning to Posterior. [cite: 881]" },
+        { q: "A cross-section that separates the top of the spinal cord from the bottom is on what plane?", options: ["Sagittal", "Horizontal", "Transverse", "Coronal"], a: 2, exp: "This is the Transverse plane. [cite: 887]" },
+        { q: "During the absolute refractory period of an action potential, why is it impossible for another stimulus to trigger a second depolarization?", options: ["The equilibrium potential for K+ is reached", "The inactivation gates (h-gates) of voltage-gated Na+ channels are closed", "The activation gates of Na+ channels are closed", "The sodium-potassium pump has not restored gradients"], a: 1, exp: "The inactivation gates (h-gates) of voltage-gated Na+ channels are closed and cannot be reopened by voltage. [cite: 901]" },
+        { q: "A patient suffers a stroke in the Left Middle Cerebral Artery. They understand speech but struggle to produce words (telegraphic speech). This indicates damage to:", options: ["Wernicke's Area", "Arcuate Fasciculus", "Broca's Area", "Angular Gyrus"], a: 2, exp: "Broca's Area controls speech production; damage causes telegraphic speech. [cite: 906]" },
+        { q: "In a myelinated axon, the density of voltage-gated Na+ channels is highest at the:", options: ["Internodes", "Nodes of Ranvier", "Myelin sheath surface", "Dendrites"], a: 1, exp: "The density is highest at the Nodes of Ranvier to allow saltatory conduction. [cite: 913]" },
+        { q: "Which neuroglial cell can myelinate multiple axons simultaneously in the CNS?", options: ["Schwann cell", "Astrocyte", "Oligodendrocyte", "Satellite cell"], a: 2, exp: "Oligodendrocytes myelinate multiple axons in the CNS. [cite: 920]" },
+        { q: "A toxin that selectively damages oligodendrocytes would most likely result in:", options: ["Reduced CSF production", "Impaired blood-brain barrier", "Reduced conduction velocity in CNS axons", "Increased CNS inflammation"], a: 2, exp: "Damage to oligodendrocytes harms myelin, reducing conduction velocity in CNS axons. [cite: 925]" },
+        { q: "What is the gold standard method/device for detecting epilepsy?", options: ["EMG", "EKG", "fMRI", "EEG"], a: 3, exp: "EEG is the gold standard for detecting epilepsy. [cite: 930]" },
+        { q: "Which of the following statements about caffeine is false?", options: ["Caffeine is a competitive agonist for the adenosine receptor", "Caffeine increases CNS activity", "Smoking speeds up caffeine clearance from the body", "Caffeine does not directly bind to dopamine receptors"], a: 0, exp: "Caffeine is a competitive ANTAGONIST, not an agonist, for the adenosine receptor. [cite: 936]" },
+        { q: "What do we call the autorhythmic cells in the heart which, like neurons, generate action potentials?", options: ["Glial cells", "Pacemaker cells", "Sinoatrial cells", "Arrhythmic cells"], a: 1, exp: "They are called Pacemaker cells. [cite: 941]" },
+        { q: "What do we call the sticky clumps of cells that form in the brain in Alzheimer's disease, blocking neural communication?", options: ["Tau tangles", "Amyloid-beta plaques", "APP clusters", "Myelin scarring"], a: 1, exp: "Amyloid-beta plaques are the sticky clumps in Alzheimer's. [cite: 946]" },
+        { q: "Which type of neurons does ALS primarily affect?", options: ["Sensory neurons", "Autonomic neurons", "Motor neurons", "Interneurons only"], a: 2, exp: "ALS primarily affects motor neurons. [cite: 951]" },
+        { q: "The human nervous system is divided into the Central Nervous System (CNS) and the:", options: ["Peripheral Nervous System", "Somatic Nervous System", "Autonomic Nervous System", "Enteric Nervous System"], a: 0, exp: "It is divided into the CNS and PNS. [cite: 963]" },
+        { q: "In the brain, the area required for the comprehension of spoken and written language is:", options: ["Broca's Area", "Wernicke's Area", "The Motor Cortex", "Arcuate Fasciculus"], a: 1, exp: "Wernicke's area is required for comprehension. [cite: 969]" },
+        { q: "Broca's area and Wernicke's area are physically connected by a large bundle of nerve fibers known as the:", options: ["Corpus Callosum", "Arcuate Fasciculus", "Medulla Oblongata", "Spinal Tract"], a: 1, exp: "They are connected by the Arcuate Fasciculus. [cite: 970]" },
+        { q: "The spine region at the very bottom, below the sacrum, is called the:", options: ["Lumbar spine", "Cervical spine", "Thoracic spine", "Coccygeal spine"], a: 3, exp: "The lowest section is the coccygeal spine (coccyx). [cite: 978]" },
+        { q: "Which cells are the specialized resident macrophages of the CNS, originating in the yolk sac?", options: ["Astrocytes", "Microglia", "Ependymal cells", "Schwann cells"], a: 1, exp: "Microglia are the resident macrophages of the CNS. [cite: 980]" },
+        { q: "Multiple sclerosis is usually diagnosed using which clinical criteria?", options: ["McDonald criteria", "Glasgow scale", "Apgar score", "DSM-5"], a: 0, exp: "MS is diagnosed using the McDonald criteria. [cite: 983]" },
+        { q: "In Multiple Sclerosis, which immune cells are considered the driving force of the disease, initiating the attack on myelin?", options: ["B-cells", "Macrophages", "Autoreactive T-cells", "Neutrophils"], a: 2, exp: "Autoreactive T-cells are the driving force. [cite: 984]" },
+        { q: "In the patellar reflex, the antagonist muscle (hamstring) relaxes while the agonist (quadriceps) contracts. Name the specific neural circuit mechanism responsible for this.", options: ["Spatial summation", "Reciprocal inhibition", "Temporal summation", "Refractory activation"], a: 1, exp: "This is caused by reciprocal inhibition. [cite: 1010]" },
+        { q: "What is the primary distinction between EMG and EEG?", options: ["EMG measures heart activity; EEG measures muscles", "EMG measures electrical activity of muscles; EEG measures the brain", "EMG measures brain waves; EEG measures heart rate", "EMG is for digestion; EEG is for respiration"], a: 1, exp: "EMG is for muscles, EEG is for the brain. [cite: 1013]" },
+        { q: "Why does shingles manifest itself as a rash stripe or band?", options: ["The virus targets the bloodstream evenly", "VZV infects a ganglion, creating a rash at a specific dermatome innervated by a single nerve", "The virus follows lymphatic fluid paths", "It is an allergic reaction to skin oils"], a: 1, exp: "VZV infects a specific ganglion and travels down a single nerve dermatome. [cite: 1023]" },
         { q: "What is the lining of the ventricles called?", options: ["Meninges", "Choroid plexus", "Dura mater", "Arachnoid mater"], a: 1, exp: "The lining of the ventricles is called the choroid plexus." },
-        { q: "What cell type lines the choroid plexus?", options: ["Schwann cells", "Astrocytes", "Microglia", "Ependymal cells"], a: 3, exp: "Ependymal cells line these areas." },
         { q: "Ependymal cells are a type of _____ cells.", options: ["Glial", "Neurons", "Stem", "Endocrine"], a: 0, exp: "Ependymal cells are a type of glial cell." },
         { q: "What is the main role of the ventricles?", options: ["Regulating heart rate", "Production and distribution of cerebrospinal fluid (CSF)", "Relaying sensory signals", "Forming long-term memories"], a: 1, exp: "The main role is the production and distribution of cerebrospinal fluid (CSF)." },
         { q: "Which of the following is a function of cerebrospinal fluid (CSF)?", options: ["Increases blood pressure", "Produces insulin", "Reduces strain forces and maintains the extracellular environment of neurons", "Transmits action potentials"], a: 2, exp: "CSF reduces strain forces and maintains the extracellular environment of neurons." },
@@ -215,12 +243,7 @@
         { q: "What structure forms the 'central wall' of the third ventricle?", options: ["Interthalamic adhesion", "Cerebral aqueduct", "Pons", "Medulla oblongata"], a: 0, exp: "The interthalamic adhesion forms the central wall of the third ventricle." },
         { q: "How does the third ventricle communicate with the fourth ventricle?", options: ["Intraventricular foramen", "Cerebral aqueduct", "Central canal", "Optic nerve"], a: 1, exp: "The third ventricle communicates with the fourth via the cerebral aqueduct." },
         { q: "How does CSF leave the central nervous system?", options: ["Through the lateral ventricles", "Through the third ventricle", "Through the fourth ventricle", "Through the choroid plexus"], a: 2, exp: "CSF leaves the central nervous system through the fourth ventricle." },
-        { q: "Which type of photoreceptor is more abundant in the human eye?", options: ["Rods", "Cones", "They are equal", "Maculae"], a: 0, exp: "There are significantly more rods than cones in the human eye." },
-        { q: "Grave’s disease is primarily associated with which of the following?", options: ["Hypothyroidism", "Hyperthyroidism", "Type 1 Diabetes", "Addison's disease"], a: 1, exp: "Graves' disease is an autoimmune disorder that leads to hyperthyroidism." },
         { q: "What are Purkinje fibers?", options: ["Sensory receptors in the skin", "Specialized cardiac cells in the heart's conduction system", "Nerves connecting the eyes to the brain", "Support cells in the brain"], a: 1, exp: "Purkinje fibers are specialized cardiac cells in the heart's conduction system." },
-        { q: "What are the key proteins involved in Alzheimer's disease?", options: ["Actin and myosin", "Insulin and glucagon", "Amyloid plaques and neurofibrillary tangles (Tau)", "Hemoglobin and myoglobin"], a: 2, exp: "Alzheimer's involves the build-up of amyloid plaques and tau tangles." },
-        { q: "Which layer of the eye is composed of dense fibrous tissue?", options: ["Retina", "Cornea", "Choroid", "Sclera"], a: 3, exp: "The sclera is the layer of the eye composed of dense fibrous tissue." },
-        { q: "The coupling of a diiodotyrosine (DIT) and a diiodotyrosine (DIT) by thyroid peroxidase forms what?", options: ["T3", "Thyroxine (T4)", "Epinephrine", "Cortisol"], a: 1, exp: "Coupling of DIT and DIT leads to the formation of Thyroxine (T4)." },
         { q: "Are olfactory tracts able to regenerate?", options: ["Yes", "No", "Only in childhood", "Only with medication"], a: 0, exp: "Yes, olfactory tracts are able to regenerate." },
         { q: "What is the ratio of ions moved by the sodium-potassium pump?", options: ["2 sodium out, 3 potassium in", "3 sodium out, 2 potassium in", "3 sodium in, 2 potassium out", "1 sodium out, 1 potassium in"], a: 1, exp: "The pump moves 3 sodium ions out and 2 potassium ions in." },
         { q: "Why is the inside of a cell generally negative?", options: ["Lack of sodium", "High concentration of chloride outside", "Lots of negatively charged ions and proteins inside", "The cell membrane blocks all positive ions"], a: 2, exp: "The cell is negative because there are lots of negatively charged ions and proteins inside." },
@@ -243,17 +266,67 @@
         { q: "Which brain structure is primarily responsible for forming and storing new, long-term declarative memories?", options: ["Amygdala", "Thalamus", "Hippocampus", "Hypothalamus"], a: 2, exp: "The hippocampus is primarily responsible for forming and storing new memories." },
         { q: "Which area of the brain is known as the 'fear center' and plays a key role in the fight-or-flight response?", options: ["Thalamus", "Amygdala", "Pons", "Medulla"], a: 1, exp: "The amygdala is the brain's 'fear center'." },
         { q: "Which brain structure controls vital body functions like temperature, hunger, thirst, and hormone release from the pituitary gland?", options: ["Hippocampus", "Amygdala", "Hypothalamus", "Cerebellum"], a: 2, exp: "The hypothalamus controls vital functions, including temperature, hunger, and pituitary hormone release." },
+        { q: "A bundle of axons within the central nervous system (CNS) is called a:", options: ["Nerve", "Ganglion", "Fascicle", "Tract"], a: 3, exp: "A bundle of axons in the central nervous system (CNS) is called a tract." },
+        { q: "Which lobe of the cerebral cortex is primarily responsible for generating motor commands?", options: ["Parietal lobe", "Occipital lobe", "Temporal lobe", "Frontal lobe"], a: 3, exp: "The frontal lobe is responsible for generating motor commands." },
+        { q: "In the spinal cord, which horn contains motor neurons that direct the movement of skeletal muscles?", options: ["Posterior horn", "Lateral horn", "Anterior (ventral) horn", "Dorsal horn"], a: 2, exp: "The anterior (ventral) horn contains motor neurons that direct skeletal muscle movement." },
+        
+        // SENSE ORGANS (From PDF Key & Old Set)
+        { q: "Which statement about rods in the eye is false?", options: ["They confer achromatic vision", "They require more light for detection than cones", "They are predominantly located in the central retina", "They produce scotopic vision"], a: 2, exp: "It is FALSE that they are located in the central retina; rods are mostly in the peripheral retina. [cite: 1054]" },
+        { q: "Which region of the eye is analogous to a camera aperture?", options: ["Iris", "Macula", "Optic nerve", "Pupil"], a: 3, exp: "The pupil is analogous to a camera aperture. [cite: 1060]" },
+        { q: "Which of the following about aqueous humor is true?", options: ["It is the main constituent of tears", "It maintains intraocular pressure", "It has a higher concentration of proteins than plasma", "It has an acidic pH"], a: 1, exp: "It maintains intraocular pressure. [cite: 1066]" },
+        { q: "Select the correct rank order of refractive index in the components of the eye and air, from greatest to least.", options: ["Lens > cornea > aqueous and vitreous humor > air", "Cornea > lens > aqueous > air", "Air > cornea > lens > aqueous", "Aqueous > lens > cornea > air"], a: 0, exp: "Lens > cornea > aqueous and vitreous humor > air. [cite: 1071]" },
+        { q: "What do we call the region of the eye that the optical nerve passes through, lacking photoreceptors?", options: ["Fovea", "Retina", "Macula", "Optic disk"], a: 3, exp: "This is the Optic disk (the blind spot). [cite: 1076]" },
+        { q: "What do we call matching colors with different spectral distributions?", options: ["Colorimers", "Metamers", "Trichromatic matches", "Shades"], a: 1, exp: "This is known as Metamers. [cite: 1081]" },
+        { q: "High-frequency sounds are detected at which part of the basilar membrane?", options: ["Apex", "Base", "Middle", "Cochlear nerve"], a: 1, exp: "High-frequency sounds are detected at the base. [cite: 1102]" },
+        { q: "What best describes the function of the pinna?", options: ["Collect and funnel sound waves", "Balance pressure", "Process sound waves", "Protect the ear drum"], a: 0, exp: "The pinna collects and funnels sound waves. [cite: 1107]" },
+        { q: "Which middle ear bone is also known as the 'anvil'?", options: ["Malleus", "Incus", "Stapes", "Ear drum"], a: 1, exp: "The Incus is the anvil. [cite: 1116]" },
+        { q: "Pitch refers to our perception of what sound property?", options: ["Amplitude", "Volume", "Frequency", "Decibels"], a: 2, exp: "Pitch refers to frequency. [cite: 1121]" },
+        { q: "The basilar membrane separates what two fluids in the cochlea?", options: ["Scala vestibuli & scala media", "Scala vestibuli & scala tympani", "Scala media & scala tympani", "None of the above"], a: 2, exp: "It separates the scala media and scala tympani. [cite: 1126]" },
+        { q: "Olfactory receptor cells are:", options: ["Odorant-detecting chemoreceptors", "Bipolar sensory neurons", "Glial cells", "Tuft cells"], a: 1, exp: "Olfactory receptor cells are bipolar sensory neurons. [cite: 1131]" },
+        { q: "The small oval area in the center of the retina containing the highest concentration of cones is the:", options: ["Macula", "Yellow spot", "Optic Disk", "Perifovea"], a: 0, exp: "The macula is the small oval area in the center of the retina. [cite: 1136]" },
+        { q: "During mechanotransduction in the inner ear, stereocilia deflection opens channels allowing which ions to enter the cell?", options: ["Na+ and Cl-", "K+ and Ca2+", "Ca2+ and Na+", "Mg2+ and K+"], a: 1, exp: "K+ and Ca2+ enter the cell to depolarize it. [cite: 1143]" },
+        { q: "Which taste receptors detect sweet substances?", options: ["T1R1 and T1R3", "ENaC", "T2R", "T1R2 and T1R3"], a: 3, exp: "T1R2 and T1R3 detect sweet tastes. [cite: 1152]" },
+        { q: "What is Optical Coherence Tomography (OCT) primarily used to examine?", options: ["The heart", "The ear", "The eye/retina", "The skin"], a: 2, exp: "OCT uses light to capture images of the eye. [cite: 1157]" },
+        { q: "If the cornea is to be reshaped to correct myopia, should its curvature be made greater or smaller?", options: ["Greater", "Smaller", "It should not be reshaped", "Reversed"], a: 1, exp: "It should be made smaller (flatter). [cite: 1159]" },
+        { q: "Tonotopy refers to the orderly spatial arrangement of different sound frequencies. How does the basilar membrane enable this?", options: ["The base is wide/flexible, the apex is narrow/stiff", "The base is narrow/stiff, the apex is wide/flexible", "It has different fluids", "It changes length"], a: 1, exp: "The base of the basilar membrane is narrow and stiff, while the apex is wide and flexible. [cite: 1161]" },
+        { q: "Which of the following is a possible cause of dysgeusia?", options: ["Chemotherapy", "Zinc deficiency", "Poor oral hygiene", "All of the above"], a: 3, exp: "All of these can cause dysgeusia (distorted taste). [cite: 1166]" },
+        { q: "If a patient's eye focuses light in front of the retina, they have:", options: ["Myopia", "Hyperopia", "Presbyopia", "Astigmatism"], a: 0, exp: "This is the classic presentation of Myopia (nearsightedness). [cite: 1174]" },
+        { q: "What type of corrective lens is used for hyperopia?", options: ["Convex, converging", "Concave, converging", "Convex, diverging", "Concave, diverging"], a: 0, exp: "Hyperopia is corrected with a convex, converging lens. [cite: 1179]" },
+        { q: "Which receptors detect changes in arterial carbon dioxide concentration and blood pH?", options: ["Mechanoreceptors", "Thermoreceptors", "Nociceptors", "Chemoreceptors"], a: 3, exp: "Chemoreceptors detect these chemical changes. [cite: 1186]" },
+        { q: "Which receptors are stimulated by chemicals released from damaged cells and inflammatory mediators?", options: ["Mechanoreceptors", "Thermoreceptors", "Nociceptors", "Chemoreceptors"], a: 2, exp: "Nociceptors detect pain/damage. [cite: 1186]" },
+        { q: "Which type of photoreceptor is more abundant in the human eye?", options: ["Rods", "Cones", "They are equal", "Maculae"], a: 0, exp: "There are significantly more rods than cones in the human eye." },
+        { q: "Which layer of the eye is composed of dense fibrous tissue?", options: ["Retina", "Cornea", "Choroid", "Sclera"], a: 3, exp: "The sclera is the layer of the eye composed of dense fibrous tissue." },
         { q: "What happens in a patient with otosclerosis?", options: ["Ringing in the ears", "The bones of the middle ear get stiff and cannot transmit sound", "The outer ear canal becomes inflamed", "Fluid builds up in the inner ear"], a: 1, exp: "Otosclerosis is when the bones of the middle ear get stiff and can’t transmit sound." },
-        { q: "A condition caused by prolonged exposure to high levels of cortisol is known as:", options: ["Addison's disease", "Cushing's syndrome", "Grave's disease", "Hyperthyroidism"], a: 1, exp: "Cushing's syndrome is caused by prolonged exposure to high levels of cortisol." },
         { q: "If a patient can see close objects clearly, but distant objects are blurry, they have:", options: ["Hyperopia", "Presbyopia", "Myopia", "Astigmatism"], a: 2, exp: "Myopia is a condition where close objects appear clear, but distant ones are blurry." },
         { q: "A total loss of the sense of smell is called:", options: ["Dysosmia", "Anosmia", "Dysgeusia", "Nyctalopia"], a: 1, exp: "Anosmia is the loss of the sense of smell." },
         { q: "In the vestibular system, what does the utricle detect?", options: ["Vertical linear movements", "Rotational acceleration", "Horizontal linear movements", "High-frequency sounds"], a: 2, exp: "The utricle detects horizontal linear movements, such as forward or backward motion." },
         { q: "Which mechanoreceptor detects light touch and low-frequency vibration, and is located in the dermal papillae of hairless skin?", options: ["Pacinian Corpuscle", "Ruffini Ending", "Merkel Disks", "Meissner Corpuscle"], a: 3, exp: "The Meissner Corpuscle detects light touch and low-frequency vibration." },
         { q: "Which large, onion-like mechanoreceptor detects deep pressure and high-frequency vibration?", options: ["Ruffini Ending", "Pacinian Corpuscle", "Meissner Corpuscle", "Merkel Disks"], a: 1, exp: "The Pacinian Corpuscle detects deep pressure and high-frequency vibration." },
-        { q: "A bundle of axons within the central nervous system (CNS) is called a:", options: ["Nerve", "Ganglion", "Fascicle", "Tract"], a: 3, exp: "A bundle of axons in the central nervous system (CNS) is called a tract." },
-        { q: "Which lobe of the cerebral cortex is primarily responsible for generating motor commands?", options: ["Parietal lobe", "Occipital lobe", "Temporal lobe", "Frontal lobe"], a: 3, exp: "The frontal lobe is responsible for generating motor commands." },
-        { q: "In the spinal cord, which horn contains motor neurons that direct the movement of skeletal muscles?", options: ["Posterior horn", "Lateral horn", "Anterior (ventral) horn", "Dorsal horn"], a: 2, exp: "The anterior (ventral) horn contains motor neurons that direct skeletal muscle movement." },
-        { q: "If a person develops aphasia (inability to speak) as a result of a stroke, which specific area in the frontal lobe is likely damaged?", options: ["Wernicke's Area", "Broca's Area", "Primary Motor Cortex", "Somatosensory Cortex"], a: 1, exp: "Broca's Area in the frontal lobe is critical for speech production." },
+
+        // ENDOCRINE SYSTEM (From PDF Key & Old Set)
+        { q: "Which of the following is NOT a function of the endocrine system?", options: ["Maintain homeostasis", "Influence metabolism", "Influence growth and development", "Sense external stimuli in environment"], a: 3, exp: "Sensing external stimuli is the job of the nervous/sensory systems. [cite: 1191]" },
+        { q: "Which gland is known as the 'master gland' and secretes hormones such as FSH, LH, TSH, and GH?", options: ["Thyroid gland", "Pituitary gland", "Pineal gland", "Adrenal gland"], a: 1, exp: "The pituitary gland is the master gland. [cite: 1223]" },
+        { q: "Which hormone is secreted by the thyroid gland and regulates metabolic rate?", options: ["Cortisol", "Thyroxine", "Insulin", "PTH"], a: 1, exp: "Thyroxine regulates the metabolic rate. [cite: 1228]" },
+        { q: "The adrenal medulla secretes which hormones during times of stress?", options: ["Cortisol and aldosterone", "Epinephrine and norepinephrine", "Testosterone and estrogen", "Insulin and glucagon"], a: 1, exp: "It secretes epinephrine and norepinephrine. [cite: 1233]" },
+        { q: "Which type of hormone binds to receptors inside the cell and directly influences gene transcription?", options: ["Peptide hormone", "Amine hormone", "Steroid hormone", "Eicosanoid"], a: 2, exp: "Steroid hormones bind to intracellular receptors. [cite: 1238]" },
+        { q: "Which of the following statements about endocrine vs. exocrine glands is correct?", options: ["Endocrine glands secrete products through ducts to surfaces", "Exocrine glands release hormones into the bloodstream", "Endocrine glands release hormones into the bloodstream to target tissues", "Exocrine glands have no target tissues"], a: 2, exp: "Endocrine glands are ductless and release hormones into the bloodstream. [cite: 1243]" },
+        { q: "Which of the following is considered the largest purely endocrine gland?", options: ["Thyroid", "Thymus", "Pancreatic gland", "Adrenal"], a: 0, exp: "The thyroid is the largest endocrine gland. [cite: 1264]" },
+        { q: "What is the name of the structure connecting the lobes of the thyroid?", options: ["Thyroid isthmus", "Thyroid segment", "Thyroid bridge", "Thyroid vessel"], a: 0, exp: "The lobes are connected by the thyroid isthmus. [cite: 1269]" },
+        { q: "In which part of the anterior pituitary gland does most hormone production occur?", options: ["Hypothalamus", "Pars distalis", "Pars tuberalis", "Pars intermedia"], a: 1, exp: "Most hormone production occurs in the pars distalis. [cite: 1274]" },
+        { q: "The body stops insulin production in:", options: ["Diabetes mellitus type I", "Diabetes mellitus type II", "Hyperthyroidism", "Hypoglycemia"], a: 0, exp: "In Type I Diabetes, the body stops producing insulin. [cite: 1281]" },
+        { q: "Enlargement of the thyroid is known as:", options: ["Hyperthyroidism", "Hypothyroidism", "Gigantism", "Goiter"], a: 3, exp: "A goiter is an enlargement of the thyroid. [cite: 1286]" },
+        { q: "Which condition below is also known as low blood sugar?", options: ["Polydipsia", "Polyphagia", "Hypoglycemia", "Hyperglycemia"], a: 2, exp: "Hypoglycemia means low blood sugar. [cite: 1291]" },
+        { q: "Which of the following would most likely be used to treat Hashimoto's disease?", options: ["TSH agonist", "TSH antagonist", "Thyroid hormone agonist", "Thyroid hormone antagonist"], a: 2, exp: "Hashimoto's causes hypothyroidism, so you would treat it with a thyroid hormone agonist (replacement). [cite: 1296]" },
+        { q: "Peptide hormones are water-soluble molecules that act as first messengers. They typically activate second messengers such as:", options: ["DNA and RNA", "ATP and ADP", "cAMP and Ca2+", "Na+ and K+"], a: 2, exp: "Peptide hormones typically activate cAMP and Ca2+ pathways. [cite: 1302]" },
+        { q: "Growth Hormone (GH) is chemically composed of a:", options: ["Protein", "Steroid", "Lipid", "Glycoprotein"], a: 0, exp: "GH is a protein hormone. [cite: 1309]" },
+        { q: "Androgens are chemically composed of:", options: ["Proteins", "Steroids", "Peptides", "Glycoproteins"], a: 1, exp: "Androgens are steroid hormones. [cite: 1309]" },
+        { q: "Compare the mechanism, speed, and distance of action of hormones and neurotransmitters.", options: ["Hormones are fast and short-acting; Neurotransmitters are slow and far-acting", "Hormones are released into synapses; Neurotransmitters into the bloodstream", "Hormones are released by glands to the bloodstream, are slow, and act far; Neurotransmitters act in synapses, are fast, and short.", "There is no difference"], a: 2, exp: "Hormones: bloodstream, slow, far. Neurotransmitters: synapse, fast, short. [cite: 1329]" },
+        { q: "What property of hormones allows them to reach and interact with intracellular receptors?", options: ["Water-solubility", "Lipid-solubility", "Large molecular weight", "Electrical charge"], a: 1, exp: "Lipid-solubility allows them to cross cell membranes. [cite: 1331]" },
+        { q: "A 35-year-old woman presents with weight loss, tachycardia, low TSH, high T4, and positive TSI antibodies. What is her most likely diagnosis?", options: ["Hashimoto's disease", "Cushing's syndrome", "Graves disease", "Addison's disease"], a: 2, exp: "These are the classic symptoms and lab results for Graves disease. [cite: 1337]" },
+        { q: "What is the mechanism of Graves disease?", options: ["Loss of thyroid tissue", "Autoimmune TSI antibodies bind to TSH receptors, increasing T3/T4", "Tumor in the pituitary gland", "Lack of dietary iodine"], a: 1, exp: "Autoimmune TSI antibodies bind to TSH receptors, overstimulating the thyroid to release T3/T4. [cite: 1341]" },
+        { q: "Grave’s disease is primarily associated with which of the following?", options: ["Hypothyroidism", "Hyperthyroidism", "Type 1 Diabetes", "Addison's disease"], a: 1, exp: "Graves' disease is an autoimmune disorder that leads to hyperthyroidism." },
+        { q: "The coupling of a diiodotyrosine (DIT) and a diiodotyrosine (DIT) by thyroid peroxidase forms what?", options: ["T3", "Thyroxine (T4)", "Epinephrine", "Cortisol"], a: 1, exp: "Coupling of DIT and DIT leads to the formation of Thyroxine (T4)." },
+        { q: "A condition caused by prolonged exposure to high levels of cortisol is known as:", options: ["Addison's disease", "Cushing's syndrome", "Grave's disease", "Hyperthyroidism"], a: 1, exp: "Cushing's syndrome is caused by prolonged exposure to high levels of cortisol." },
         { q: "Thyroid hormones (T3 and T4) act on the body to generally increase:", options: ["Melatonin", "Metabolism", "Bone density", "Sleepiness"], a: 1, exp: "Thyroid hormones increase metabolism." }
     ];
 
@@ -269,6 +342,7 @@
 
     // --- INITIALIZATION ---
     window.onload = () => {
+        document.getElementById('q-total').innerText = gameQuestions.length;
         const checkboxContainer = document.getElementById('player-checkboxes');
         masterPlayerList.forEach(player => {
             const label = document.createElement('label');
@@ -288,14 +362,13 @@
             return;
         }
 
-        // Loop through the master list. If the player was selected, add them to alternating teams.
-        // This ensures "every other player on a separate team" based on the master list order.
+        // Alternate assignments based on the provided list
         let isTeam1 = true;
         masterPlayerList.forEach(player => {
             if (selectedPlayers.includes(player)) {
                 if (isTeam1) team1.push(player);
                 else team2.push(player);
-                isTeam1 = !isTeam1; // Toggle flag
+                isTeam1 = !isTeam1; 
             }
         });
 
@@ -320,13 +393,11 @@
 
     // --- RENDER QUESTION ---
     function loadQuestion() {
-        // Reset UI
         document.getElementById('feedback-area').style.display = 'none';
         document.getElementById('next-btn').style.display = 'none';
         document.getElementById('options-container').innerHTML = '';
         document.getElementById('q-counter').innerText = questionIndex + 1;
 
-        // Update Turn Banner
         const banner = document.getElementById('turn-banner');
         if (currentTurn === 1) {
             banner.innerText = "Team 1's Turn! (Blue)";
@@ -339,7 +410,6 @@
         const qData = gameQuestions[questionIndex];
         document.getElementById('question-text').innerText = qData.q;
 
-        // Render Options (Keeping original index logic for answering)
         qData.options.forEach((optText, i) => {
             const btn = document.createElement('button');
             btn.className = 'option-btn';
@@ -354,7 +424,6 @@
         const qData = gameQuestions[questionIndex];
         const isCorrect = (selectedIndex === qData.a);
 
-        // Lock Buttons
         const allBtns = document.querySelectorAll('.option-btn');
         allBtns.forEach((btn, i) => {
             btn.disabled = true;
@@ -365,7 +434,7 @@
         feedbackArea.style.display = 'block';
 
         if (isCorrect) {
-            scores[currentTurn] += 100; // Award 100 points
+            scores[currentTurn] += 100;
             document.getElementById(`s${currentTurn}`).innerText = scores[currentTurn];
             feedbackArea.className = "show-correct";
             feedbackArea.innerHTML = `<strong>Correct! +100 Points to Team ${currentTurn}</strong><br><br>${qData.exp}`;
@@ -385,7 +454,6 @@
         if (questionIndex >= gameQuestions.length) {
             showResults();
         } else {
-            // Swap turns
             currentTurn = (currentTurn === 1) ? 2 : 1;
             loadQuestion();
         }
