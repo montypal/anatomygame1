@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anatomy & Physiology: Team Showdown</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --team1: #3498db;
+            --team2: #e74c3c;
+            --success: #27ae60;
+            --danger: #c0392b;
+            --bg-color: #ecf0f1;
+            --text-color: #2c3e50;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 800px;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1, h2 { text-align: center; color: var(--primary); margin-top: 0; }
+        
+        /* Scoreboard */
+        #scoreboard {
+            display: none;
+            justify-content: space-between;
+            background: #f8f9f9;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: 2px solid #bdc3c7;
+        }
+        .score-t1 { color: var(--team1); }
+        .score-t2 { color: var(--team2); }
+        .turn-indicator {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        /* Player Selection */
+        .player-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .player-label {
+            display: flex;
+            align-items: center;
+            background: #f4f6f7;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 500;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .player-label:hover { border-color: var(--team1); }
+        .player-label input { margin-right: 15px; transform: scale(1.5); }
+
+        /* Team Reveal */
+        .teams-container {
+            display: flex;
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .team-box {
+            flex: 1;
+            padding: 20px;
+            border-radius: 12px;
+            color: white;
+        }
+        .team1-box { background-color: var(--team1); }
+        .team2-box { background-color: var(--team2); }
+        .team-box h3 { margin-top: 0; text-align: center; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 10px; }
+        .team-box ul { list-style-type: none; padding: 0; font-size: 1.2rem; text-align: center; line-height: 1.8; }
+
+        /* Questions */
+        #question-text { font-size: 1.4rem; line-height: 1.5; margin-bottom: 30px; font-weight: 600; }
+        .options-grid { display: flex; flex-direction: column; gap: 12px; }
+        
+        button.option-btn {
+            background: white; border: 2px solid #bdc3c7; color: var(--text-color);
+            padding: 16px; border-radius: 8px; font-size: 1.1rem; cursor: pointer;
+            text-align: left; transition: all 0.2s; font-weight: 500;
+        }
+        button.option-btn:hover:not(:disabled) { background-color: #f0f3f4; }
+        button.option-btn.correct { background-color: #d5f5e3 !important; border-color: var(--success) !important; color: #145a32 !important; }
+        button.option-btn.wrong { background-color: #fadbd8 !important; border-color: var(--danger) !important; color: #7b241c !important; }
+        button.option-btn:disabled { cursor: not-allowed; opacity: 0.9; }
+
+        #feedback-area {
+            margin-top: 25px; padding: 20px; border-radius: 8px; display: none;
+            line-height: 1.5; font-size: 1.1rem; font-weight: 500;
+        }
+        #feedback-area.show-correct { display: block; background-color: #d5f5e3; border-left: 5px solid var(--success); color: #145a32; }
+        #feedback-area.show-wrong { display: block; background-color: #fadbd8; border-left: 5px solid var(--danger); color: #7b241c; }
+
+        /* Controls */
+        .btn-primary {
+            background: var(--primary); color: white; border: none; padding: 15px 30px;
+            border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer;
+            display: block; width: 100%; margin-top: 30px; transition: background 0.2s;
+        }
+        .btn-primary:hover { background: #1a252f; }
+        #next-btn { display: none; background: #2ecc71; }
+        #next-btn:hover { background: #27ae60; }
+
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="scoreboard">
+            <div class="score-t1">Team 1: <span id="s1">0</span></div>
+            <div>Question <span id="q-counter">1</span> / 50</div>
+            <div class="score-t2">Team 2: <span id="s2">0</span></div>
+        </div>
+        
+        <div id="turn-banner" class="turn-indicator hidden"></div>
+
+        <div id="screen-selection">
+            <h1>Select Players</h1>
+            <p class="text-center">Check the boxes for everyone playing today. The game will automatically divide you into two even teams!</p>
+            <div class="player-grid" id="player-checkboxes">
+                </div>
+            <button class="btn-primary" onclick="generateTeams()">Create Teams</button>
+        </div>
+
+        <div id="screen-teams" class="hidden">
+            <h1>Teams Assigned!</h1>
+            <div class="teams-container">
+                <div class="team-box team1-box">
+                    <h3>Team 1 (Blue)</h3>
+                    <ul id="team1-list"></ul>
+                </div>
+                <div class="team-box team2-box">
+                    <h3>Team 2 (Red)</h3>
+                    <ul id="team2-list"></ul>
+                </div>
+            </div>
+            <button class="btn-primary" onclick="startGame()">Begin Trivia!</button>
+        </div>
+
+        <div id="screen-game" class="hidden">
+            <div id="question-text">Loading question...</div>
+            <div id="options-container" class="options-grid"></div>
+            <div id="feedback-area"></div>
+            <button class="btn-primary" id="next-btn" onclick="nextQuestion()">Next Question &rarr;</button>
+        </div>
+
+        <div id="screen-results" class="hidden text-center">
+            <h1>Game Over!</h1>
+            <h2 id="winner-text" style="font-size: 2.5rem; margin: 20px 0;"></h2>
+            <div class="teams-container" style="color: black;">
+                <div class="team-box" style="background: #ebf5fb; color: var(--team1);">
+                    <h3>Team 1 Final</h3>
+                    <p style="font-size: 3rem; font-weight: bold; margin: 10px 0;" id="final-s1">0</p>
+                </div>
+                <div class="team-box" style="background: #fdedec; color: var(--team2);">
+                    <h3>Team 2 Final</h3>
+                    <p style="font-size: 3rem; font-weight: bold; margin: 10px 0;" id="final-s2">0</p>
+                </div>
+            </div>
+            <button class="btn-primary" onclick="location.reload()">Play Again</button>
+        </div>
+
+    </div>
+
+<script>
+    // --- GAME DATA ---
+    // The exact order requested by user to enforce alternating teams
+    const masterPlayerList = ["Aarav", "Anhad", "Emogen", "Daani", "Alyssa", "Maggie", "Aria", "Allison"];
+    
+    const quizData = [
+        { q: "What is the lining of the ventricles called?", options: ["Meninges", "Choroid plexus", "Dura mater", "Arachnoid mater"], a: 1, exp: "The lining of the ventricles is called the choroid plexus." },
+        { q: "What cell type lines the choroid plexus?", options: ["Schwann cells", "Astrocytes", "Microglia", "Ependymal cells"], a: 3, exp: "Ependymal cells line these areas." },
+        { q: "Ependymal cells are a type of _____ cells.", options: ["Glial", "Neurons", "Stem", "Endocrine"], a: 0, exp: "Ependymal cells are a type of glial cell." },
+        { q: "What is the main role of the ventricles?", options: ["Regulating heart rate", "Production and distribution of cerebrospinal fluid (CSF)", "Relaying sensory signals", "Forming long-term memories"], a: 1, exp: "The main role is the production and distribution of cerebrospinal fluid (CSF)." },
+        { q: "Which of the following is a function of cerebrospinal fluid (CSF)?", options: ["Increases blood pressure", "Produces insulin", "Reduces strain forces and maintains the extracellular environment of neurons", "Transmits action potentials"], a: 2, exp: "CSF reduces strain forces and maintains the extracellular environment of neurons." },
+        { q: "What connects the two lateral ventricles?", options: ["Cerebral aqueduct", "Corpus callosum", "Interthalamic adhesion", "Intraventricular foramen"], a: 3, exp: "The opening called the intraventricular foramen connects the two lateral ventricles." },
+        { q: "How is the third ventricle described structurally?", options: ["A long tube", "A spherical sac", "A misshapen donut-like structure", "A pyramid"], a: 2, exp: "It is described as a misshapen donut-like structure." },
+        { q: "What structure forms the 'central wall' of the third ventricle?", options: ["Interthalamic adhesion", "Cerebral aqueduct", "Pons", "Medulla oblongata"], a: 0, exp: "The interthalamic adhesion forms the central wall of the third ventricle." },
+        { q: "How does the third ventricle communicate with the fourth ventricle?", options: ["Intraventricular foramen", "Cerebral aqueduct", "Central canal", "Optic nerve"], a: 1, exp: "The third ventricle communicates with the fourth via the cerebral aqueduct." },
+        { q: "How does CSF leave the central nervous system?", options: ["Through the lateral ventricles", "Through the third ventricle", "Through the fourth ventricle", "Through the choroid plexus"], a: 2, exp: "CSF leaves the central nervous system through the fourth ventricle." },
+        { q: "Which type of photoreceptor is more abundant in the human eye?", options: ["Rods", "Cones", "They are equal", "Maculae"], a: 0, exp: "There are significantly more rods than cones in the human eye." },
+        { q: "Grave’s disease is primarily associated with which of the following?", options: ["Hypothyroidism", "Hyperthyroidism", "Type 1 Diabetes", "Addison's disease"], a: 1, exp: "Graves' disease is an autoimmune disorder that leads to hyperthyroidism." },
+        { q: "What are Purkinje fibers?", options: ["Sensory receptors in the skin", "Specialized cardiac cells in the heart's conduction system", "Nerves connecting the eyes to the brain", "Support cells in the brain"], a: 1, exp: "Purkinje fibers are specialized cardiac cells in the heart's conduction system." },
+        { q: "What are the key proteins involved in Alzheimer's disease?", options: ["Actin and myosin", "Insulin and glucagon", "Amyloid plaques and neurofibrillary tangles (Tau)", "Hemoglobin and myoglobin"], a: 2, exp: "Alzheimer's involves the build-up of amyloid plaques and tau tangles." },
+        { q: "Which layer of the eye is composed of dense fibrous tissue?", options: ["Retina", "Cornea", "Choroid", "Sclera"], a: 3, exp: "The sclera is the layer of the eye composed of dense fibrous tissue." },
+        { q: "The coupling of a diiodotyrosine (DIT) and a diiodotyrosine (DIT) by thyroid peroxidase forms what?", options: ["T3", "Thyroxine (T4)", "Epinephrine", "Cortisol"], a: 1, exp: "Coupling of DIT and DIT leads to the formation of Thyroxine (T4)." },
+        { q: "Are olfactory tracts able to regenerate?", options: ["Yes", "No", "Only in childhood", "Only with medication"], a: 0, exp: "Yes, olfactory tracts are able to regenerate." },
+        { q: "What is the ratio of ions moved by the sodium-potassium pump?", options: ["2 sodium out, 3 potassium in", "3 sodium out, 2 potassium in", "3 sodium in, 2 potassium out", "1 sodium out, 1 potassium in"], a: 1, exp: "The pump moves 3 sodium ions out and 2 potassium ions in." },
+        { q: "Why is the inside of a cell generally negative?", options: ["Lack of sodium", "High concentration of chloride outside", "Lots of negatively charged ions and proteins inside", "The cell membrane blocks all positive ions"], a: 2, exp: "The cell is negative because there are lots of negatively charged ions and proteins inside." },
+        { q: "What is the typical resting membrane potential of a neuron?", options: ["-55 mV", "+30 mV", "0 mV", "-70 mV"], a: 3, exp: "The resting membrane potential is -70 mV." },
+        { q: "At what threshold is an action potential triggered?", options: ["-70 mV", "-55 mV", "+30 mV", "0 mV"], a: 1, exp: "An action potential is triggered when the potential hits the -55 mV threshold." },
+        { q: "What happens during the depolarization phase of an action potential?", options: ["Gated sodium channels open", "Gated potassium channels open", "Gated sodium channels close", "The sodium-potassium pump stops"], a: 0, exp: "During depolarization, gated sodium channels open." },
+        { q: "What happens when the membrane potential reaches +30 mV?", options: ["Gated sodium channels open", "Gated potassium channels close", "Gated sodium channels close and gated potassium channels open", "The cell hyperpolarizes immediately"], a: 2, exp: "At +30 mV, gated sodium channels close and gated potassium channels open." },
+        { q: "What defines a ligand-gated ion channel?", options: ["It opens in response to a voltage change", "It opens when physically stretched", "It opens only when something binds to the channel", "It remains open at all times"], a: 2, exp: "These channels open only when something (a ligand) binds to the channel." },
+        { q: "What triggers a mechanically gated ion channel to open?", options: ["Neurotransmitters", "Voltage changes", "Physical prompts on sensory neurons", "Hormones"], a: 2, exp: "They are prompted to open by mechanical/physical forces on sensory neurons." },
+        { q: "What neurological disease can result from the disruption of voltage-gated ion channels?", options: ["Alzheimer's", "Parkinson's", "Epilepsy", "Multiple Sclerosis"], a: 2, exp: "Epilepsy can result from the disruption of voltage-gated ion channels." },
+        { q: "A bundle of axons traveling together in the peripheral nervous system is called a:", options: ["Nucleus", "Nerve", "Tract", "Ganglion"], a: 1, exp: "A bundle of axons traveling together in the PNS is called a nerve." },
+        { q: "How much of the brain's energy use is accounted for by the sodium-potassium pump?", options: ["5-10%", "20-40%", "50-70%", "80-90%"], a: 1, exp: "It accounts for 20-40% of the brain's energy use." },
+        { q: "What is the absolute refractory period?", options: ["When the cell is hyperpolarized", "The period when action potentials fire continuously", "The period of time during which you cannot have another action potential form", "When the cell is at exactly -70mV"], a: 2, exp: "It is the period of time during which you can't have another action potential form." },
+        { q: "Which neurodegenerative disease is characterized by memory loss and is primarily seen in women and adults over 65?", options: ["Multiple Sclerosis", "Alzheimer's Disease", "Parkinson's Disease", "ALS"], a: 1, exp: "Alzheimer's primarily affects people over 65 and is more common in women." },
+        { q: "Aricept (donepezil) and Namenda (memantine) are drugs used to treat which condition?", options: ["Parkinson's Disease", "Stroke", "Alzheimer's Disease", "Epilepsy"], a: 2, exp: "These drugs are used to treat Alzheimer's Disease." },
+        { q: "What is the underlying cause of Multiple Sclerosis (MS)?", options: ["Degeneration of motor neurons", "Autoimmune attack on myelin in the brain and spinal cord", "Loss of dopamine", "Plaques and tangles"], a: 1, exp: "MS is caused by an autoimmune attack on myelin in the brain and spinal cord." },
+        { q: "Parkinson's Disease is characterized by the loss of neurons that produce which neurotransmitter?", options: ["Serotonin", "Acetylcholine", "Dopamine", "GABA"], a: 2, exp: "Parkinson's involves the loss of dopamine-producing neurons in the brain." },
+        { q: "Damage to the developing brain before birth, leading to muscle stiffness and poor coordination, describes which condition?", options: ["ALS", "Multiple Sclerosis", "Cerebral Palsy", "Parkinson's"], a: 2, exp: "Cerebral Palsy is caused by damage to the developing brain, often before birth." },
+        { q: "Amyotrophic Lateral Sclerosis (ALS) primarily involves the degeneration of which cells?", options: ["Sensory neurons", "Glial cells", "Motor neurons", "Ependymal cells"], a: 2, exp: "ALS involves the degeneration of motor neurons." },
+        { q: "Which brain structure is primarily responsible for forming and storing new, long-term declarative memories?", options: ["Amygdala", "Thalamus", "Hippocampus", "Hypothalamus"], a: 2, exp: "The hippocampus is primarily responsible for forming and storing new memories." },
+        { q: "Which area of the brain is known as the 'fear center' and plays a key role in the fight-or-flight response?", options: ["Thalamus", "Amygdala", "Pons", "Medulla"], a: 1, exp: "The amygdala is the brain's 'fear center'." },
+        { q: "Which brain structure controls vital body functions like temperature, hunger, thirst, and hormone release from the pituitary gland?", options: ["Hippocampus", "Amygdala", "Hypothalamus", "Cerebellum"], a: 2, exp: "The hypothalamus controls vital functions, including temperature, hunger, and pituitary hormone release." },
+        { q: "What happens in a patient with otosclerosis?", options: ["Ringing in the ears", "The bones of the middle ear get stiff and cannot transmit sound", "The outer ear canal becomes inflamed", "Fluid builds up in the inner ear"], a: 1, exp: "Otosclerosis is when the bones of the middle ear get stiff and can’t transmit sound." },
+        { q: "A condition caused by prolonged exposure to high levels of cortisol is known as:", options: ["Addison's disease", "Cushing's syndrome", "Grave's disease", "Hyperthyroidism"], a: 1, exp: "Cushing's syndrome is caused by prolonged exposure to high levels of cortisol." },
+        { q: "If a patient can see close objects clearly, but distant objects are blurry, they have:", options: ["Hyperopia", "Presbyopia", "Myopia", "Astigmatism"], a: 2, exp: "Myopia is a condition where close objects appear clear, but distant ones are blurry." },
+        { q: "A total loss of the sense of smell is called:", options: ["Dysosmia", "Anosmia", "Dysgeusia", "Nyctalopia"], a: 1, exp: "Anosmia is the loss of the sense of smell." },
+        { q: "In the vestibular system, what does the utricle detect?", options: ["Vertical linear movements", "Rotational acceleration", "Horizontal linear movements", "High-frequency sounds"], a: 2, exp: "The utricle detects horizontal linear movements, such as forward or backward motion." },
+        { q: "Which mechanoreceptor detects light touch and low-frequency vibration, and is located in the dermal papillae of hairless skin?", options: ["Pacinian Corpuscle", "Ruffini Ending", "Merkel Disks", "Meissner Corpuscle"], a: 3, exp: "The Meissner Corpuscle detects light touch and low-frequency vibration." },
+        { q: "Which large, onion-like mechanoreceptor detects deep pressure and high-frequency vibration?", options: ["Ruffini Ending", "Pacinian Corpuscle", "Meissner Corpuscle", "Merkel Disks"], a: 1, exp: "The Pacinian Corpuscle detects deep pressure and high-frequency vibration." },
+        { q: "A bundle of axons within the central nervous system (CNS) is called a:", options: ["Nerve", "Ganglion", "Fascicle", "Tract"], a: 3, exp: "A bundle of axons in the central nervous system (CNS) is called a tract." },
+        { q: "Which lobe of the cerebral cortex is primarily responsible for generating motor commands?", options: ["Parietal lobe", "Occipital lobe", "Temporal lobe", "Frontal lobe"], a: 3, exp: "The frontal lobe is responsible for generating motor commands." },
+        { q: "In the spinal cord, which horn contains motor neurons that direct the movement of skeletal muscles?", options: ["Posterior horn", "Lateral horn", "Anterior (ventral) horn", "Dorsal horn"], a: 2, exp: "The anterior (ventral) horn contains motor neurons that direct skeletal muscle movement." },
+        { q: "If a person develops aphasia (inability to speak) as a result of a stroke, which specific area in the frontal lobe is likely damaged?", options: ["Wernicke's Area", "Broca's Area", "Primary Motor Cortex", "Somatosensory Cortex"], a: 1, exp: "Broca's Area in the frontal lobe is critical for speech production." },
+        { q: "Thyroid hormones (T3 and T4) act on the body to generally increase:", options: ["Melatonin", "Metabolism", "Bone density", "Sleepiness"], a: 1, exp: "Thyroid hormones increase metabolism." }
+    ];
+
+    // --- GAME STATE ---
+    let team1 = [];
+    let team2 = [];
+    let currentTurn = 1; // 1 for Team 1, 2 for Team 2
+    let scores = { 1: 0, 2: 0 };
+    let questionIndex = 0;
+    
+    // Shuffle the quiz data so it's fresh each game
+    const gameQuestions = [...quizData].sort(() => Math.random() - 0.5);
+
+    // --- INITIALIZATION ---
+    window.onload = () => {
+        const checkboxContainer = document.getElementById('player-checkboxes');
+        masterPlayerList.forEach(player => {
+            const label = document.createElement('label');
+            label.className = 'player-label';
+            label.innerHTML = `<input type="checkbox" value="${player}" checked> ${player}`;
+            checkboxContainer.appendChild(label);
+        });
+    };
+
+    // --- TEAM GENERATION ---
+    function generateTeams() {
+        const checkboxes = document.querySelectorAll('#player-checkboxes input:checked');
+        const selectedPlayers = Array.from(checkboxes).map(cb => cb.value);
+
+        if (selectedPlayers.length < 2) {
+            alert("Please select at least 2 players to form teams!");
+            return;
+        }
+
+        // Loop through the master list. If the player was selected, add them to alternating teams.
+        // This ensures "every other player on a separate team" based on the master list order.
+        let isTeam1 = true;
+        masterPlayerList.forEach(player => {
+            if (selectedPlayers.includes(player)) {
+                if (isTeam1) team1.push(player);
+                else team2.push(player);
+                isTeam1 = !isTeam1; // Toggle flag
+            }
+        });
+
+        // Render Teams
+        document.getElementById('team1-list').innerHTML = team1.map(p => `<li>${p}</li>`).join('');
+        document.getElementById('team2-list').innerHTML = team2.map(p => `<li>${p}</li>`).join('');
+
+        // Switch Screens
+        document.getElementById('screen-selection').classList.add('hidden');
+        document.getElementById('screen-teams').classList.remove('hidden');
+    }
+
+    // --- START TRIVIA ---
+    function startGame() {
+        document.getElementById('screen-teams').classList.add('hidden');
+        document.getElementById('scoreboard').style.display = 'flex';
+        document.getElementById('turn-banner').classList.remove('hidden');
+        document.getElementById('screen-game').classList.remove('hidden');
+        
+        loadQuestion();
+    }
+
+    // --- RENDER QUESTION ---
+    function loadQuestion() {
+        // Reset UI
+        document.getElementById('feedback-area').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+        document.getElementById('options-container').innerHTML = '';
+        document.getElementById('q-counter').innerText = questionIndex + 1;
+
+        // Update Turn Banner
+        const banner = document.getElementById('turn-banner');
+        if (currentTurn === 1) {
+            banner.innerText = "Team 1's Turn! (Blue)";
+            banner.style.backgroundColor = "var(--team1)";
+        } else {
+            banner.innerText = "Team 2's Turn! (Red)";
+            banner.style.backgroundColor = "var(--team2)";
+        }
+
+        const qData = gameQuestions[questionIndex];
+        document.getElementById('question-text').innerText = qData.q;
+
+        // Render Options (Keeping original index logic for answering)
+        qData.options.forEach((optText, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = optText;
+            btn.onclick = () => submitAnswer(i, btn);
+            document.getElementById('options-container').appendChild(btn);
+        });
+    }
+
+    // --- HANDLE ANSWER ---
+    function submitAnswer(selectedIndex, btnElement) {
+        const qData = gameQuestions[questionIndex];
+        const isCorrect = (selectedIndex === qData.a);
+
+        // Lock Buttons
+        const allBtns = document.querySelectorAll('.option-btn');
+        allBtns.forEach((btn, i) => {
+            btn.disabled = true;
+            if (i === qData.a) btn.classList.add('correct');
+        });
+
+        const feedbackArea = document.getElementById('feedback-area');
+        feedbackArea.style.display = 'block';
+
+        if (isCorrect) {
+            scores[currentTurn] += 100; // Award 100 points
+            document.getElementById(`s${currentTurn}`).innerText = scores[currentTurn];
+            feedbackArea.className = "show-correct";
+            feedbackArea.innerHTML = `<strong>Correct! +100 Points to Team ${currentTurn}</strong><br><br>${qData.exp}`;
+        } else {
+            btnElement.classList.add('wrong');
+            feedbackArea.className = "show-wrong";
+            feedbackArea.innerHTML = `<strong>Incorrect! No points awarded.</strong><br><br>${qData.exp}`;
+        }
+
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    // --- NEXT QUESTION ---
+    function nextQuestion() {
+        questionIndex++;
+        
+        if (questionIndex >= gameQuestions.length) {
+            showResults();
+        } else {
+            // Swap turns
+            currentTurn = (currentTurn === 1) ? 2 : 1;
+            loadQuestion();
+        }
+    }
+
+    // --- SHOW RESULTS ---
+    function showResults() {
+        document.getElementById('screen-game').classList.add('hidden');
+        document.getElementById('scoreboard').style.display = 'none';
+        document.getElementById('turn-banner').classList.add('hidden');
+        document.getElementById('screen-results').classList.remove('hidden');
+
+        document.getElementById('final-s1').innerText = scores[1];
+        document.getElementById('final-s2').innerText = scores[2];
+
+        const winnerText = document.getElementById('winner-text');
+        if (scores[1] > scores[2]) {
+            winnerText.innerText = "Team 1 Wins! 🏆";
+            winnerText.style.color = "var(--team1)";
+        } else if (scores[2] > scores[1]) {
+            winnerText.innerText = "Team 2 Wins! 🏆";
+            winnerText.style.color = "var(--team2)";
+        } else {
+            winnerText.innerText = "It's a Tie! 🤝";
+            winnerText.style.color = "var(--primary)";
+        }
+    }
+</script>
+
+</body>
+</html>
